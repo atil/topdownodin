@@ -3,8 +3,8 @@
 cls
 
 if "%1" == "-b" (
-    odin build . -out:bin/OdinTest.exe -debug
+    odin build . -out:bin/TopDown.exe -debug
 ) else (
-    odin run . -out:bin/OdinTest.exe -debug
+    odin run . -out:bin/TopDown.exe -debug
 )
 
