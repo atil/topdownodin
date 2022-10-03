@@ -1,0 +1,28 @@
+Core
++ assets database struct, add other textures
+- start from here: import math queries and write unit tests
+- gameobjects with arbitrary shapes
+
+Gameplay
++ make the thing look at the cursor
++ add size to gameobject
++ fix: gameobject points being in global space
+- have some obstacles around
+- then here: implement visibility calculations
+- implement character collision: circle collider would feel better
+- implement character movement: accel/decel
+
+Render
+- raylib postprocess shader 
+
+Util/editor
+- draw grid
+- json: gameobject positions & corners
+
+Environment
+- [on hold] odinfmt: prints to console?
+- odin.vim amme hizmeti: add built-in functions like append (https://github.com/odin-lang/Odin/wiki/Built-in-Procedures)
+- try vim-bujo for todos
+- reduce raylib log level
+- move to an actual folder and create a git repository
+
