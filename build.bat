@@ -2,9 +2,13 @@
 
 cls
 
+if not exist bin (
+    mkdir bin
+)
+
 if "%1" == "-b" (
-    odin build . -out:bin/TopDown.exe -debug
+    odin build . -out:bin/TopDownOdin.exe -debug
 ) else (
-    odin run . -out:bin/TopDown.exe -debug
+    odin run . -out:bin/TopDownOdin.exe -debug
 )
 

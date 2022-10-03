@@ -17,6 +17,7 @@ Game :: struct {
     config: ^GameConfig,
     db: ^AssetDatabase,
     gos: [dynamic]GameObject,
+    obstacles: [dynamic]GameObject,
     player: ^GameObject,
     camera: rl.Camera2D,
 }
@@ -26,7 +27,11 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
     game.db = asset_db;
 
     game_add_quad(game, "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
+    append(&game.obstacles, game.gos[len(game.gos) - 1]);
+
     game_add_quad(game, "PadGreen", Vec2 {-100, -200}, Vec2 {50, 50});
+    append(&game.obstacles, game.gos[len(game.gos) - 1]);
+
     game_add_quad(game, "Ball", Vec2 {100, 100}, Vec2 {32, 32});
 
     game.player = &game.gos[len(game.gos) - 1];
@@ -90,7 +95,26 @@ game_update :: proc(game: ^Game, dt: f32) {
     look_at_pos := (game.player.position * t) + mouse_pos * (1 - t);
 
     game.camera.target = look_at_pos;
-    
+
+    game_do_visibility_stuff(game);
+}
+
+game_do_visibility_stuff :: proc(game: ^Game) {
+    player_pos := game.player.position;
+
+    for obs in game.obstacles {
+        obs_corners := make([]Vec2, len(obs.points));
+
+        for i in 0..<len(obs.points) { // TODO @SPEED: We can cache this for fixed obstacles
+            obs_corners[i] = obs.points[i] + obs.position;
+        }
+
+        for corner in obs_corners {
+            // @HERE. this isn't in the BeginMode2D(game.camera) block.
+            rl.DrawLineV(player_pos, corner, rl.GREEN);
+        }
+    }
+
 }
  
 game_draw :: proc(game: ^Game) {
