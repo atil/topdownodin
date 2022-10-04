@@ -36,6 +36,7 @@ main :: proc() {
     asset_db.textures = make(map[string]rl.Texture);
     defer delete(asset_db.textures);
 
+    rl.SetTraceLogLevel(rl.TraceLogLevel.ERROR);
     rl.InitWindow(cast(i32)config.screen_width, cast(i32)config.screen_height, "testing");
     rl.SetTargetFPS(60);
 
