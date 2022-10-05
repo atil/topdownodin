@@ -19,6 +19,7 @@ Game :: struct {
     gos: [dynamic]GameObject,
     obstacles: [dynamic]GameObject,
     player: ^GameObject,
+    cursor: ^GameObject,
     camera: rl.Camera2D,
 }
 
@@ -32,8 +33,10 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
     game_add_quad(game, "PadGreen", Vec2 {-100, -200}, Vec2 {50, 50});
     append(&game.obstacles, game.gos[len(game.gos) - 1]);
 
-    game_add_quad(game, "Ball", Vec2 {100, 100}, Vec2 {32, 32});
+    game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {10, 10});
+    game.cursor = &game.gos[len(game.gos) - 1];
 
+    game_add_quad(game, "Ball", Vec2 {100, 100}, Vec2 {32, 32});
     game.player = &game.gos[len(game.gos) - 1];
 
     game.camera = rl.Camera2D{};
@@ -89,12 +92,10 @@ game_update :: proc(game: ^Game, dt: f32) {
     }
     game.player.position += move_dir * (game.config.player_speed * dt);
 
-    mouse_pos := rl.GetMousePosition();
+    mouse_world_pos := rl.GetScreenToWorld2D(rl.GetMousePosition(), game.camera);
 
-    t: f32 = 0.8;// TODO @CLEANUP: use mix() proc
-    look_at_pos := (game.player.position * t) + mouse_pos * (1 - t);
-
-    game.camera.target = look_at_pos;
+    game.camera.target = linalg.mix(mouse_world_pos, game.player.position, 0.8);
+    game.cursor.position = mouse_world_pos;
 
     game_do_visibility_stuff(game);
 }
