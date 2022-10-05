@@ -17,7 +17,12 @@ Game :: struct {
     config: ^GameConfig,
     db: ^AssetDatabase,
     gos: [dynamic]GameObject,
+
     obstacles: [dynamic]GameObject,
+    obstacle_corners: [dynamic]Vec2,
+    obstacle_edges: [dynamic]LineSeg,
+    visible_corners: [dynamic]Vec2,
+
     player: ^GameObject,
     cursor: ^GameObject,
     camera: rl.Camera2D,
@@ -44,6 +49,20 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
     game.camera.offset = Vec2 {cast(f32)config.screen_width / 2.0, cast(f32)config.screen_height / 2.0};
     game.camera.rotation = 0.0;
     game.camera.zoom = 1.0;
+
+    for obs in game.obstacles {
+        corner_count := len(obs.points);
+        obs_corners := make([]Vec2, corner_count);
+        defer delete(obs_corners);
+
+        for i in 0..<corner_count {
+            corner := obs.points[i] + obs.position;
+            append(&game.obstacle_corners, corner);
+
+            line_seg := LineSeg { obs.position + obs.points[i], obs.position + obs.points[(i + 1) % corner_count] };
+            append(&game.obstacle_edges, line_seg);
+        }
+    }
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -66,12 +85,10 @@ game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2)
         Vec2 {0.0, 1.0}, 
         Vec2 {1.0, 1.0}, 
         Vec2 {1.0, 0.0},
-
         Vec2 {0.0, 0.0}, // Close the poly
     };
 
     append(&game.gos, go);
-    fmt.printf("%s %v\n", tex_name, go.points[0]);
 }
 
 game_update :: proc(game: ^Game, dt: f32) {
@@ -100,21 +117,40 @@ game_update :: proc(game: ^Game, dt: f32) {
     game_do_visibility_stuff(game);
 }
 
-game_do_visibility_stuff :: proc(game: ^Game) {
-    player_pos := game.player.position;
+game_is_visible :: proc(game: ^Game, a: Vec2, b: Vec2) -> bool {
 
-    for obs in game.obstacles {
-        obs_corners := make([]Vec2, len(obs.points));
-
-        for i in 0..<len(obs.points) { // TODO @SPEED: We can cache this for fixed obstacles
-            obs_corners[i] = obs.points[i] + obs.position;
-        }
-
-        for corner in obs_corners {
-            debug_draw_line(player_pos, corner, rl.GREEN);
-        }
+    for edge in game.obstacle_edges {
     }
 
+    return false; // TODO @INCOMPLETE
+}
+
+game_visibility_query :: proc(game: ^Game, ray: Ray) -> Vec2 {
+
+    return Vec2{0, 0}; // TODO @INCOMPLETE
+}
+
+game_do_visibility_stuff :: proc(game: ^Game) {
+    clear(&game.visible_corners);
+    player_pos := game.player.position;
+
+    for corner in game.obstacle_corners {
+        origin := player_pos;
+        dir := linalg.vector_normalize(corner - player_pos);
+
+        if (game_is_visible(game, player_pos, corner)) {
+            append(&game.visible_corners, corner);
+            ray_delta1: Ray; // TODO @INCOMPLETE: Rotate these
+            ray_delta2: Ray;
+
+            delta1 := game_visibility_query(game, ray_delta1);
+            delta2 := game_visibility_query(game, ray_delta2);
+
+            // TODO @INCOMPLETE: Check if delta1 is far enough from the corner
+            if (true) do append(&game.visible_corners, delta1);
+            if (true) do append(&game.visible_corners, delta2);
+        }
+    }
 }
  
 game_draw :: proc(game: ^Game) {
@@ -132,14 +168,10 @@ game_draw :: proc(game: ^Game) {
 
     }
 
-    for go in game.gos {
-        for i := 0; i < len(go.points); i += 1 {
-            p1 := go.position + go.points[i];
-            p2 := go.position + go.points[(i + 1) % len(go.points)];
-
-            rl.DrawLineV(p1, p2, rl.RAYWHITE);
-        }
+    for line in game.obstacle_edges {
+        debug_draw_line(line.a, line.b, rl.RAYWHITE);
     }
+
 
     debug_draw_flush();
 
