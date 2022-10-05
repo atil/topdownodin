@@ -110,8 +110,7 @@ game_do_visibility_stuff :: proc(game: ^Game) {
         }
 
         for corner in obs_corners {
-            // @HERE. this isn't in the BeginMode2D(game.camera) block.
-            rl.DrawLineV(player_pos, corner, rl.GREEN);
+            debug_draw_line(player_pos, corner, rl.GREEN);
         }
     }
 
@@ -140,6 +139,8 @@ game_draw :: proc(game: ^Game) {
             rl.DrawLineV(p1, p2, rl.RAYWHITE);
         }
     }
+
+    debug_draw_flush();
 
     rl.EndMode2D();
     rl.EndDrawing();
