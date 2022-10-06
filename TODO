@@ -22,7 +22,7 @@ Util/editor
 - draw grid
 - json: gameobject positions & corners
 + debug draw: to be drawn on top of everything else.
-- start from here: debug draw: circle
++ debug draw: circle
 
 Environment
 - [on hold] odinfmt: prints to console?

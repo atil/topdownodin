@@ -14,6 +14,17 @@ LineSeg :: struct {
     b: Vec2,
 }
 
+vec2_rotate :: proc(v: Vec2, deg: f32) -> Vec2 {
+    rads := deg * math.RAD_PER_DEG;
+    x := v.x * math.cos(rads) - v.y * math.sin(rads);
+    y := v.x * math.sin(rads) + v.y * math.cos(rads);
+    return Vec2 {x, y};
+}
+
+vec2_almost_same :: proc(v1: Vec2, v2: Vec2, eps: f32) -> bool {
+    return math.vector_length2(v1 - v2) < eps * eps;
+}
+
 // Taken from:
 // https://rootllama.wordpress.com/2014/06/20/ray-line-segment-intersection-test-in-2d/
 ray_line_intersection :: proc(ray: Ray, line: LineSeg) -> (bool, f32) {

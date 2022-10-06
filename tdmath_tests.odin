@@ -34,3 +34,15 @@ test_ray_edge_1 :: proc(t: ^testing.T) {
     testing.expect(t, succ);
     testing.expect(t, hit_time == 2);
 }
+
+@(test)
+test_line_line_intersect_1 :: proc(t: ^testing.T) {
+    // TODO @INCOMPLETE
+    testing.expect(t, true);
+}
+
+@(test)
+test_vector_rotate :: proc(t: ^testing.T) {
+    // TODO @INCOMPLETE
+    testing.expect(t, true);
+}
