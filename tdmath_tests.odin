@@ -75,8 +75,7 @@ test_line_line_intersect_colinear_2 :: proc(t: ^testing.T) {
     succ, intersection := line_line_intersection(line1, line2);
 
     testing.expect(t, succ);
-    fmt.println(intersection);
-    testing.expect(t, intersection == Vec2 {1, 0} );
+    testing.expect(t, intersection == Vec2 {2, 0} );
 }
 
 @(test)

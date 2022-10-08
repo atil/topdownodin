@@ -51,7 +51,7 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
     game.camera.zoom = 1.0;
 
     for obs in game.obstacles {
-        corner_count := len(obs.points);
+        corner_count := len(obs.points) - 1; // Last one is used to close the polygon
         obs_corners := make([]Vec2, corner_count);
         defer delete(obs_corners);
 

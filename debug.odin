@@ -2,6 +2,7 @@ package main
 
 import rl "vendor:raylib"
 import math "core:math"
+import "core:fmt"
 
 DebugDrawType :: enum {
     Line,
@@ -30,7 +31,7 @@ debug_draw_circle :: proc(center: Vec2, radius: f32, color: rl.Color) {
     for i in 0..<POINT_COUNT {
         x := math.cos(angle_step_rad * cast(f32)i) * radius;
         y := math.sin(angle_step_rad * cast(f32)i) * radius;
-        points[i] = Vec2 {x, y};
+        points[i] = center + Vec2 {x, y};
     }
 
     append(&debug_draw_commands, DebugDrawCommand {

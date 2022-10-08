@@ -57,7 +57,7 @@ line_line_intersection :: proc(line1: LineSeg, line2: LineSeg) -> (bool, Vec2) {
 
     if (cXa == 0 && cXb == 0) {
 
-        // One point is common. Return that one
+        // If one point is common, return that one
         EPS :: 0.00001
         if (vec2_almost_same(line1.a, line2.a, EPS)) do return true, line1.a;
         if (vec2_almost_same(line1.a, line2.b, EPS)) do return true, line1.a;
