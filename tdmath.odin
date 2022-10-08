@@ -1,6 +1,7 @@
 package main
 
-import math "core:math/linalg"
+import "core:fmt"
+import "core:math/linalg"
 
 Vec2_Up :: Vec2 {0, -1};
 
@@ -15,14 +16,14 @@ LineSeg :: struct {
 }
 
 vec2_rotate :: proc(v: Vec2, deg: f32) -> Vec2 {
-    rads := deg * math.RAD_PER_DEG;
-    x := v.x * math.cos(rads) - v.y * math.sin(rads);
-    y := v.x * math.sin(rads) + v.y * math.cos(rads);
+    rads := deg * linalg.RAD_PER_DEG;
+    x := v.x * linalg.cos(rads) - v.y * linalg.sin(rads);
+    y := v.x * linalg.sin(rads) + v.y * linalg.cos(rads);
     return Vec2 {x, y};
 }
 
 vec2_almost_same :: proc(v1: Vec2, v2: Vec2, eps: f32) -> bool {
-    return math.vector_length2(v1 - v2) < eps * eps;
+    return linalg.vector_length2(v1 - v2) < eps * eps;
 }
 
 // Taken from:
@@ -32,13 +33,13 @@ ray_line_intersection :: proc(ray: Ray, line: LineSeg) -> (bool, f32) {
     v2 := line.b - line.a;
     v3 := Vec2 { -ray.dir.y, ray.dir.x };
 
-    t1 := math.cross(v2, v1) / math.dot(v2, v3);
-    t2 := math.dot(v1, v3) / math.dot(v2, v3);
+    t1 := linalg.cross(v2, v1) / linalg.dot(v2, v3);
+    t2 := linalg.dot(v1, v3) / linalg.dot(v2, v3);
 
     EPS :: 0.00001;
 
     hit_time := t1;
-    succ := t1 >= 0 && t2 + EPS >= 0 && t2 - EPS <= 1;
+    succ := t1 >= 0 && t2 + EPS >= 0 && t2 - EPS <= 1; // Points included
 
     return succ, hit_time;
 }
@@ -54,12 +55,30 @@ line_line_intersection :: proc(line1: LineSeg, line2: LineSeg) -> (bool, Vec2) {
     cXb := c.x * b_dir.y - c.y * b_dir.x;
     aXb := a_dir.x * b_dir.y - a_dir.y * b_dir.x;
 
+    if (cXa == 0 && cXb == 0) {
+
+        // One point is common. Return that one
+        EPS :: 0.00001
+        if (vec2_almost_same(line1.a, line2.a, EPS)) do return true, line1.a;
+        if (vec2_almost_same(line1.a, line2.b, EPS)) do return true, line1.a;
+        if (vec2_almost_same(line1.b, line2.a, EPS)) do return true, line1.b;
+        if (vec2_almost_same(line1.b, line2.b, EPS)) do return true, line1.b;
+
+        // Check if they're overlapping
+        overlap_x := (line2.a.x - line1.a.x < 0.0) != (line2.a.x - line1.b.x < 0.0);
+        overlap_y := (line2.a.y - line1.a.y < 0.0) != (line2.a.y - line1.b.y < 0.0);
+
+        if (overlap_x || overlap_y) do return true, line2.a;
+    }
+
+    if (aXb == 0) do return false, Vec2 {0, 0}; // Lines are parallel
+
     t := cXa / aXb;
     u := cXb / aXb;
 
     EPS :: 0.001
 
-    succ := (t - EPS > 0 && t + EPS < 1) && (u - EPS > 0 && u + EPS < 1);
+    succ := (t - EPS > 0 && t + EPS < 1) && (u - EPS > 0 && u + EPS < 1); // Points excluded
     intersection := line1.a + (a_dir * t);
 
     return succ, intersection;

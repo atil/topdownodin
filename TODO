@@ -1,7 +1,7 @@
 Core
 + assets database struct, add other textures
 + import math queries and write unit tests
-- then here: line-line intersection unit tests
+- line-line intersection unit tests (then here 1: fix failing test)
 + gameobjects with arbitrary shapes
 
 Gameplay
@@ -9,6 +9,7 @@ Gameplay
 + add size to gameobject
 + fix: gameobject points being in global space
 + cursor visual
+- then here 2: draw debug circles for visible corners
 - implement visibility calculations
 - have some obstacles around
 - implement character collision: circle collider would feel better
@@ -30,4 +31,4 @@ Environment
 - try vim-bujo for todos
 + reduce raylib log level
 + move to an actual folder and create a git repository
-
+- start from here: gitignore .exe files
