@@ -10,6 +10,9 @@ Gameplay
 + fix: gameobject points being in global space
 + cursor visual
 + draw debug circles for visible corners
++ sort visible corners
++ show text on visible corners
+- draw 360degrees visibility polygon
 - implement visibility calculations
 - have some obstacles around
 - implement character collision: circle collider would feel better
@@ -24,6 +27,7 @@ Util/editor
 - json: gameobject positions & corners
 + debug draw: to be drawn on top of everything else.
 + debug draw: circle
++ debug draw: text, world positions
 
 Environment
 - [on hold] odinfmt: prints to console?

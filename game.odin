@@ -18,6 +18,7 @@ Game :: struct {
     db: ^AssetDatabase,
     gos: [dynamic]GameObject,
 
+    world_corners: [4]Vec2,
     obstacles: [dynamic]GameObject,
     obstacle_corners: [dynamic]Vec2,
     obstacle_edges: [dynamic]LineSeg,
@@ -63,6 +64,14 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
             append(&game.obstacle_edges, line_seg);
         }
     }
+
+    WORLD_SIZE :: 1000.0
+    game.world_corners = {
+        Vec2 {-WORLD_SIZE, -WORLD_SIZE},
+        Vec2 {WORLD_SIZE, -WORLD_SIZE},
+        Vec2 {WORLD_SIZE, WORLD_SIZE},
+        Vec2 {-WORLD_SIZE, WORLD_SIZE},
+    };
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -72,7 +81,7 @@ game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2)
     go.size = size;
 
     half_size := size / 2.0;
-    go.points = { // Right handed
+    go.points = { // Right handed, starting from top-left
         Vec2 {-half_size.x, -half_size.y},
         Vec2 {-half_size.x,  half_size.y},
         Vec2 { half_size.x,  half_size.y},

@@ -3,6 +3,7 @@ package main
 import rl "vendor:raylib"
 import math "core:math"
 import "core:fmt"
+import "core:strings"
 
 DebugDrawType :: enum {
     Line,
@@ -15,7 +16,14 @@ DebugDrawCommand :: struct {
     type: DebugDrawType
 }
 
+DebugDrawTextCommand :: struct {
+    content: string,
+    world_position: Vec2,
+    color: rl.Color,
+}
+
 debug_draw_commands: [dynamic]DebugDrawCommand;
+debug_draw_text_commands: [dynamic]DebugDrawTextCommand;
 
 debug_draw_line :: proc(start: Vec2, end: Vec2, color: rl.Color) {
     append(&debug_draw_commands, DebugDrawCommand {
@@ -39,6 +47,12 @@ debug_draw_circle :: proc(center: Vec2, radius: f32, color: rl.Color) {
     });
 }
 
+debug_draw_text :: proc(content: string, world_position: Vec2, color: rl.Color) {
+    append(&debug_draw_text_commands, DebugDrawTextCommand {
+        content, world_position, color
+    });
+}
+
 debug_draw_flush :: proc() {
     for command in debug_draw_commands {
         switch command.type {
@@ -55,4 +69,11 @@ debug_draw_flush :: proc() {
     }
 
     clear(&debug_draw_commands);
+
+    for command in debug_draw_text_commands {
+        the_cstr: cstring = strings.clone_to_cstring(command.content);
+        rl.DrawText(the_cstr, cast(i32)command.world_position.x, cast(i32)command.world_position.y, 20, rl.RED);
+    }
+
+    clear(&debug_draw_text_commands);
 }

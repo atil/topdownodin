@@ -1,7 +1,10 @@
 package main
 
+import "core:math"
 import "core:math/linalg"
 import "core:fmt"
+import "core:slice"
+import "core:sort"
 import rl "vendor:raylib"
 
 @(private="file")
@@ -55,8 +58,36 @@ game_compute_visibility_shape :: proc(game: ^Game) {
         if (vec2_almost_same(delta2, corner, 0.1)) do append(&game.visible_corners, delta2);
     }
 
-    for corner in game.visible_corners {
+    for world_corner in game.world_corners {
+        if (game_is_visible(&game.obstacle_edges, LineSeg { player_pos, world_corner })) {
+            append(&game.visible_corners, world_corner);
+        }
+    }
+
+    clockwise_sort_lambda :: proc(a: Vec2, b: Vec2) -> int {
+        angle_a := math.atan2(a.y, a.x);
+        angle_b := math.atan2(b.y, b.x);
+        if (angle_a == angle_b) do return 0;
+        if (angle_a < angle_b) do return -1;
+        else do return 1;
+    }
+
+    // Switching to local space (of the player) when sorting the corners,
+    // because Odin doesn't have captures, so we can't pass in the player position.
+
+    visible_corners_local := make([]Vec2, len(game.visible_corners));
+    defer delete(visible_corners_local);
+    copy(visible_corners_local, game.visible_corners[:]);
+    for _, i in game.visible_corners {
+        visible_corners_local[i] = game.visible_corners[i] - player_pos;
+    }
+
+    sort.quick_sort_proc(visible_corners_local, clockwise_sort_lambda);
+
+    for local_corner, i in visible_corners_local {
+        corner := local_corner + player_pos;
         debug_draw_line(player_pos, corner, rl.GREEN);
         debug_draw_circle(corner, 10, rl.GREEN);
+        debug_draw_text(fmt.tprintf("%d", i), corner, rl.RED);
     }
 }
