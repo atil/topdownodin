@@ -3,7 +3,6 @@ package main
 import "core:math"
 import "core:math/linalg"
 import "core:fmt"
-import "core:slice"
 import "core:sort"
 import rl "vendor:raylib"
 
@@ -54,8 +53,9 @@ game_compute_visibility_shape :: proc(game: ^Game) {
         delta1 := game_visibility_query(&game.obstacle_edges, ray_delta1);
         delta2 := game_visibility_query(&game.obstacle_edges, ray_delta2);
 
-        if (vec2_almost_same(delta1, corner, 0.1)) do append(&game.visible_corners, delta1);
-        if (vec2_almost_same(delta2, corner, 0.1)) do append(&game.visible_corners, delta2);
+        EPS :: 10.0
+        if (!vec2_almost_same(delta1, corner, EPS)) do append(&game.visible_corners, delta1);
+        if (!vec2_almost_same(delta2, corner, EPS)) do append(&game.visible_corners, delta2);
     }
 
     for world_corner in game.world_corners {
@@ -68,7 +68,7 @@ game_compute_visibility_shape :: proc(game: ^Game) {
         angle_a := math.atan2(a.y, a.x);
         angle_b := math.atan2(b.y, b.x);
         if (angle_a == angle_b) do return 0;
-        if (angle_a < angle_b) do return -1;
+        if (angle_a > angle_b) do return -1;
         else do return 1;
     }
 
@@ -84,10 +84,8 @@ game_compute_visibility_shape :: proc(game: ^Game) {
 
     sort.quick_sort_proc(visible_corners_local, clockwise_sort_lambda);
 
-    for local_corner, i in visible_corners_local {
-        corner := local_corner + player_pos;
-        debug_draw_line(player_pos, corner, rl.GREEN);
-        debug_draw_circle(corner, 10, rl.GREEN);
-        debug_draw_text(fmt.tprintf("%d", i), corner, rl.RED);
+    for _, i in visible_corners_local {
+        game.visible_corners[i] = visible_corners_local[i] + player_pos;
     }
+
 }

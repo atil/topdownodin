@@ -12,14 +12,14 @@ Gameplay
 + draw debug circles for visible corners
 + sort visible corners
 + show text on visible corners
-- draw 360degrees visibility polygon
++ draw 360degrees visibility polygon 
 - implement visibility calculations
 - have some obstacles around
 - implement character collision: circle collider would feel better
 - implement character movement: accel/decel
 
 Render
-- raylib custom shader for quads
++ raylib custom shader for quads
 - raylib postprocess shader 
 
 Util/editor

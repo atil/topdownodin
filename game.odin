@@ -27,6 +27,8 @@ Game :: struct {
     player: ^GameObject,
     cursor: ^GameObject,
     camera: rl.Camera2D,
+
+    test_shader: rl.Shader, // TODO @CLEANUP: Rename
 }
 
 game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
@@ -36,8 +38,8 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
     game_add_quad(game, "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
     append(&game.obstacles, game.gos[len(game.gos) - 1]);
 
-    game_add_quad(game, "PadGreen", Vec2 {-100, -200}, Vec2 {50, 50});
-    append(&game.obstacles, game.gos[len(game.gos) - 1]);
+    // game_add_quad(game, "PadGreen", Vec2 {-100, -200}, Vec2 {50, 50});
+    // append(&game.obstacles, game.gos[len(game.gos) - 1]);
 
     game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {10, 10});
     game.cursor = &game.gos[len(game.gos) - 1];
@@ -72,6 +74,8 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
         Vec2 {WORLD_SIZE, WORLD_SIZE},
         Vec2 {-WORLD_SIZE, WORLD_SIZE},
     };
+
+    game.test_shader = rl.LoadShader("assets/shaders/vertex.vert", "assets/shaders/fragment.frag");
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -130,6 +134,7 @@ game_draw :: proc(game: ^Game) {
     rl.BeginDrawing();
     rl.ClearBackground(rl.BLACK);
 
+    rl.BeginShaderMode(game.test_shader);
     rl.BeginMode2D(game.camera);
 
     for i := 0; i < len(game.gos); i += 1 {
@@ -138,15 +143,38 @@ game_draw :: proc(game: ^Game) {
         tex: ^rl.Texture = &game.db.textures[go.texture_name];
         rl.DrawTexturePoly(tex^, go.position, raw_data(go.points), raw_data(go.texcoords), 
             cast(i32)len(go.points), rl.RAYWHITE);
-
     }
 
     for line in game.obstacle_edges {
         debug_draw_line(line.a, line.b, rl.RAYWHITE);
     }
 
+    for corner, i in game.visible_corners {
+        debug_draw_line(game.player.position, corner, rl.GREEN);
+        debug_draw_circle(corner, 10, rl.GREEN);
+        debug_draw_text(fmt.tprintf("%d", i), corner, rl.RED);
+    }
+
+    // Draw visibility polygon
+    poly_points := make([]Vec2, len(game.visible_corners) + 2); // +2 for the center and closing the polygon
+    defer delete(poly_points);
+    poly_points[0] = game.player.position;
+    for i in 0..<len(game.visible_corners) {
+        poly_points[i + 1] = game.visible_corners[i];
+    }
+    poly_points[len(game.visible_corners) + 1] = poly_points[1]; // Close the polygon with the first visible_corner
+
+    // [^]MyType is called a multipointer. It's the pointer part of a slice.
+    // Triangle fan takes its points right-handed/CCW
+    rl.DrawTriangleFan(raw_data(poly_points), cast(i32)len(game.visible_corners) + 2, rl.BLUE);
+
     debug_draw_flush();
 
     rl.EndMode2D();
+    rl.EndShaderMode();
     rl.EndDrawing();
+}
+
+game_deinit :: proc(game: ^Game) {
+    rl.UnloadShader(game.test_shader);
 }
