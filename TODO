@@ -13,14 +13,16 @@ Gameplay
 + sort visible corners
 + show text on visible corners
 + draw 360degrees visibility polygon 
-- implement visibility calculations
++ implement visibility calculations
 - have some obstacles around
 - implement character collision: circle collider would feel better
-- implement character movement: accel/decel
+- start from here: implement character movement: accel/decel
+- replace the (very) temporary assets
 
 Render
 + raylib custom shader for quads
-- raylib postprocess shader 
+- raylib deliver visibility shape to the shader
+- raylib postprocess shader for off-screen rendering
 
 Util/editor
 - draw grid

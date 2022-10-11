@@ -29,6 +29,7 @@ Game :: struct {
     camera: rl.Camera2D,
 
     test_shader: rl.Shader, // TODO @CLEANUP: Rename
+    rentex: rl.RenderTexture2D // TODO @TEMP
 }
 
 game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
@@ -76,6 +77,13 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
     };
 
     game.test_shader = rl.LoadShader("assets/shaders/vertex.vert", "assets/shaders/fragment.frag");
+    game.rentex = rl.LoadRenderTexture(cast(i32)game.config.screen_width, cast(i32)game.config.screen_height)
+
+    tex_loc := rl.GetShaderLocation(game.test_shader, "visibilityShape");
+    tex_loc_enum := rl.ShaderLocationIndex.VERTEX_TEXCOORD02;
+    fmt.println(tex_loc, cast(int)tex_loc_enum);
+    rl.SetShaderValueTexture(game.test_shader, tex_loc_enum, game.rentex.texture);
+    // rl.SetShaderValueTexture(game.test_shader, cast(rl.ShaderLocationIndex)tex_loc, game.rentex.texture);
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -131,8 +139,29 @@ game_update :: proc(game: ^Game, dt: f32) {
 }
  
 game_draw :: proc(game: ^Game) {
-    rl.BeginDrawing();
+        
+    rl.BeginMode2D(game.camera);
+    rl.BeginTextureMode(game.rentex);
     rl.ClearBackground(rl.BLACK);
+
+    // Draw visibility polygon
+    poly_points := make([]Vec2, len(game.visible_corners) + 2); // +2 for the center and closing the polygon
+    defer delete(poly_points);
+    poly_points[0] = game.player.position;
+    for i in 0..<len(game.visible_corners) {
+        poly_points[i + 1] = game.visible_corners[i];
+    }
+    poly_points[len(game.visible_corners) + 1] = poly_points[1]; // Close the polygon with the first visible_corner
+
+    // [^]MyType is called a multipointer. It's the pointer part of a slice.
+    // Triangle fan takes its points right-handed/CCW
+    rl.DrawTriangleFan(raw_data(poly_points), cast(i32)len(game.visible_corners) + 2, rl.RED);
+
+    rl.EndTextureMode();
+    rl.EndMode2D();
+
+    rl.BeginDrawing();
+    rl.ClearBackground(rl.Color {30, 20, 20, 255});
 
     rl.BeginShaderMode(game.test_shader);
     rl.BeginMode2D(game.camera);
@@ -155,19 +184,6 @@ game_draw :: proc(game: ^Game) {
         debug_draw_text(fmt.tprintf("%d", i), corner, rl.RED);
     }
 
-    // Draw visibility polygon
-    poly_points := make([]Vec2, len(game.visible_corners) + 2); // +2 for the center and closing the polygon
-    defer delete(poly_points);
-    poly_points[0] = game.player.position;
-    for i in 0..<len(game.visible_corners) {
-        poly_points[i + 1] = game.visible_corners[i];
-    }
-    poly_points[len(game.visible_corners) + 1] = poly_points[1]; // Close the polygon with the first visible_corner
-
-    // [^]MyType is called a multipointer. It's the pointer part of a slice.
-    // Triangle fan takes its points right-handed/CCW
-    rl.DrawTriangleFan(raw_data(poly_points), cast(i32)len(game.visible_corners) + 2, rl.BLUE);
-
     debug_draw_flush();
 
     rl.EndMode2D();
@@ -177,4 +193,5 @@ game_draw :: proc(game: ^Game) {
 
 game_deinit :: proc(game: ^Game) {
     rl.UnloadShader(game.test_shader);
+    rl.UnloadRenderTexture(game.rentex);
 }
