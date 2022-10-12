@@ -16,6 +16,8 @@ GameObject :: struct {
 Game :: struct {
     config: ^GameConfig,
     db: ^AssetDatabase,
+
+    time_since_start: f32,
     gos: [dynamic]GameObject,
 
     world_corners: [4]Vec2,
@@ -28,8 +30,11 @@ Game :: struct {
     cursor: ^GameObject,
     camera: rl.Camera2D,
 
-    test_shader: rl.Shader, // TODO @CLEANUP: Rename
-    rentex: rl.RenderTexture2D // TODO @TEMP
+    go_shader: rl.Shader,
+    post_shader: rl.Shader,
+
+    world_draw_buffer: rl.RenderTexture2D,
+    visibility_draw_buffer: rl.RenderTexture2D,
 }
 
 game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
@@ -76,14 +81,14 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig) {
         Vec2 {-WORLD_SIZE, WORLD_SIZE},
     };
 
-    game.test_shader = rl.LoadShader("assets/shaders/vertex.vert", "assets/shaders/fragment.frag");
-    game.rentex = rl.LoadRenderTexture(cast(i32)game.config.screen_width, cast(i32)game.config.screen_height)
+    game.go_shader = rl.LoadShader("assets/shaders/vertex.vert", "assets/shaders/fragment.frag");
+    game.post_shader = rl.LoadShader("", "assets/shaders/post.frag");
+    game.world_draw_buffer = rl.LoadRenderTexture(cast(i32)game.config.screen_width, cast(i32)game.config.screen_height);
+    game.visibility_draw_buffer = rl.LoadRenderTexture(cast(i32)game.config.screen_width, cast(i32)game.config.screen_height);
 
-    tex_loc := rl.GetShaderLocation(game.test_shader, "visibilityShape");
-    tex_loc_enum := rl.ShaderLocationIndex.VERTEX_TEXCOORD02;
-    fmt.println(tex_loc, cast(int)tex_loc_enum);
-    rl.SetShaderValueTexture(game.test_shader, tex_loc_enum, game.rentex.texture);
-    // rl.SetShaderValueTexture(game.test_shader, cast(rl.ShaderLocationIndex)tex_loc, game.rentex.texture);
+    vis_shape_loc := rl.GetShaderLocation(game.post_shader, "visibilityShape");
+    rl.SetShaderValueTexture(game.post_shader, cast(rl.ShaderLocationIndex)vis_shape_loc, game.visibility_draw_buffer.texture);
+
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -113,6 +118,9 @@ game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2)
 }
 
 game_update :: proc(game: ^Game, dt: f32) {
+
+    game.time_since_start = cast(f32)rl.GetTime();
+
     move_dir := Vec2 {0, 0};
     if rl.IsKeyDown(rl.KeyboardKey.W) {
         move_dir += Vec2 {0, -1};
@@ -139,9 +147,12 @@ game_update :: proc(game: ^Game, dt: f32) {
 }
  
 game_draw :: proc(game: ^Game) {
-        
+    //
+    // Visilbility draw to texture
+    //
+
     rl.BeginMode2D(game.camera);
-    rl.BeginTextureMode(game.rentex);
+    rl.BeginTextureMode(game.visibility_draw_buffer);
     rl.ClearBackground(rl.BLACK);
 
     // Draw visibility polygon
@@ -160,11 +171,14 @@ game_draw :: proc(game: ^Game) {
     rl.EndTextureMode();
     rl.EndMode2D();
 
-    rl.BeginDrawing();
-    rl.ClearBackground(rl.Color {30, 20, 20, 255});
+    //
+    // World draw to texture
+    //
 
-    rl.BeginShaderMode(game.test_shader);
+    rl.BeginTextureMode(game.world_draw_buffer);
+    rl.BeginShaderMode(game.go_shader);
     rl.BeginMode2D(game.camera);
+    rl.ClearBackground(rl.Color {30, 20, 20, 255});
 
     for i := 0; i < len(game.gos); i += 1 {
         go := game.gos[i];
@@ -188,10 +202,25 @@ game_draw :: proc(game: ^Game) {
 
     rl.EndMode2D();
     rl.EndShaderMode();
+    rl.EndTextureMode();
+
+    //
+    // Screen draw
+    //
+
+    rl.BeginDrawing();
+    rl.ClearBackground(rl.Color {30, 20, 20, 255});
+    rl.BeginShaderMode(game.post_shader);
+    rect := rl.Rectangle {0, 0, cast(f32)game.world_draw_buffer.texture.width, cast(f32)-game.world_draw_buffer.texture.height }; 
+    rl.DrawTextureRec(game.world_draw_buffer.texture, rect, Vec2 {0, 0}, rl.RAYWHITE);
+    rl.EndShaderMode();
     rl.EndDrawing();
+
 }
 
 game_deinit :: proc(game: ^Game) {
-    rl.UnloadShader(game.test_shader);
-    rl.UnloadRenderTexture(game.rentex);
+    rl.UnloadShader(game.go_shader);
+    rl.UnloadShader(game.post_shader);
+    rl.UnloadRenderTexture(game.world_draw_buffer);
+    rl.UnloadRenderTexture(game.visibility_draw_buffer);
 }

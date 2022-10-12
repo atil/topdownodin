@@ -9,7 +9,7 @@ uniform sampler2D visibilityShape;
 out vec4 finalColor;
 
 void main() {
-    vec4 visCol = texture(visibilityShape, fragTexCoord);
+    //vec4 visCol = texture(visibilityShape, fragTexCoord);
     finalColor = texture(texture0, fragTexCoord) * fragColor;
-    finalColor = mix(visCol, finalColor, 0.01);
+    // finalColor = mix(visCol, finalColor, 0.01);
 }

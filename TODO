@@ -16,13 +16,14 @@ Gameplay
 + implement visibility calculations
 - have some obstacles around
 - implement character collision: circle collider would feel better
-- start from here: implement character movement: accel/decel
+- implement character movement: accel/decel
 - replace the (very) temporary assets
 
 Render
 + raylib custom shader for quads
-- raylib deliver visibility shape to the shader
-- raylib postprocess shader for off-screen rendering
+X raylib deliver visibility shape to the shader
+X raylib postprocess shader for off-screen rendering
+- start from here: switch to SDL and achieve feature parity
 
 Util/editor
 - draw grid
