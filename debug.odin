@@ -1,9 +1,14 @@
 package main
 
-import rl "vendor:raylib"
 import math "core:math"
 import "core:fmt"
 import "core:strings"
+
+DebugColor :: struct {
+    r : f32, 
+    g : f32,
+    b : f32,
+}
 
 DebugDrawType :: enum {
     Line,
@@ -12,26 +17,26 @@ DebugDrawType :: enum {
 
 DebugDrawCommand :: struct {
     points: [dynamic]Vec2,
-    color: rl.Color,
-    type: DebugDrawType
+    color: DebugColor,
+    draw_type: DebugDrawType
 }
 
 DebugDrawTextCommand :: struct {
     content: string,
     world_position: Vec2,
-    color: rl.Color,
+    color: DebugColor,
 }
 
 debug_draw_commands: [dynamic]DebugDrawCommand;
 debug_draw_text_commands: [dynamic]DebugDrawTextCommand;
 
-debug_draw_line :: proc(start: Vec2, end: Vec2, color: rl.Color) {
+debug_draw_line :: proc(start: Vec2, end: Vec2, color: DebugColor) {
     append(&debug_draw_commands, DebugDrawCommand {
         {start, end} /* We don't use make() here? */, color, DebugDrawType.Line
     });
 }
 
-debug_draw_circle :: proc(center: Vec2, radius: f32, color: rl.Color) {
+debug_draw_circle :: proc(center: Vec2, radius: f32, color: DebugColor) {
     POINT_COUNT :: 20;
 
     angle_step_rad: f32 = (360 / POINT_COUNT) * math.RAD_PER_DEG;
@@ -47,7 +52,7 @@ debug_draw_circle :: proc(center: Vec2, radius: f32, color: rl.Color) {
     });
 }
 
-debug_draw_text :: proc(content: string, world_position: Vec2, color: rl.Color) {
+debug_draw_text :: proc(content: string, world_position: Vec2, color: DebugColor) {
     append(&debug_draw_text_commands, DebugDrawTextCommand {
         content, world_position, color
     });
@@ -55,7 +60,7 @@ debug_draw_text :: proc(content: string, world_position: Vec2, color: rl.Color) 
 
 debug_draw_flush :: proc() {
     for command in debug_draw_commands {
-        switch command.type {
+        switch command.draw_type {
             case .Line: rl.DrawLineV(command.points[0], command.points[1], command.color);
             case .Circle: {
                 point_count := len(command.points);

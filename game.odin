@@ -3,7 +3,6 @@ package main
 import "core:fmt"
 import "core:math/linalg"
 import "core:testing"
-import rl "vendor:raylib"
 
 GameObject :: struct {
     position: Vec2,

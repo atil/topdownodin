@@ -4,7 +4,6 @@ import "core:math"
 import "core:math/linalg"
 import "core:fmt"
 import "core:sort"
-import rl "vendor:raylib"
 
 @(private="file")
 game_is_visible :: proc(obstacle_edges: ^[dynamic]LineSeg, line_seg: LineSeg) -> bool {
@@ -69,7 +68,7 @@ game_compute_visibility_shape :: proc(game: ^Game) {
         angle_b := math.atan2(b.y, b.x);
         if (angle_a == angle_b) do return 0;
         if (angle_a > angle_b) do return -1;
-        else do return 1;
+        return 1;
     }
 
     // Switching to local space (of the player) when sorting the corners,

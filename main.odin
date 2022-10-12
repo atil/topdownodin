@@ -3,12 +3,14 @@ package main
 import "core:fmt"
 import "core:strings"
 import "core:time"
-import rl "vendor:raylib"
+import glm "core:math/linalg/glsl"
+import SDL "vendor:sdl2"
+import SDL_IMG "vendor:sdl2/image"
 
-Vec2 :: rl.Vector2;
+Vec2 :: glm.vec2;
 
 AssetDatabase :: struct {
-    textures : map[string]rl.Texture,
+    textures : map[string]^SDL.Surface,
 }
 
 GameConfig :: struct {
@@ -19,10 +21,15 @@ GameConfig :: struct {
 
 asset_database_add_image :: proc(db: ^AssetDatabase, name: string) {
     path := strings.concatenate([]string {"assets/", name, ".png"}[:] );
-    img := rl.LoadImage(strings.unsafe_string_to_cstring(path));
-    tex := rl.LoadTextureFromImage(img);
-    db.textures[name] = tex;
-    rl.UnloadImage(img)
+    surf := SDL_IMG.Load(strings.unsafe_string_to_cstring(path));
+    db.textures[name] = surf;
+}
+
+asset_database_deinit :: proc(db: ^AssetDatabase) {
+    for _, surf in db.textures {
+        SDL.FreeSurface(surf);
+    }
+    delete(db.textures);
 }
 
 main :: proc() {
@@ -33,12 +40,12 @@ main :: proc() {
     };
 
     asset_db: AssetDatabase;
-    asset_db.textures = make(map[string]rl.Texture);
-    defer delete(asset_db.textures);
+    asset_db.textures = make(map[string]^SDL.Surface);
+    defer asset_database_deinit(asset_db);
 
-    // rl.SetTraceLogLevel(rl.TraceLogLevel.ERROR);
-    rl.InitWindow(cast(i32)config.screen_width, cast(i32)config.screen_height, "testing");
-    rl.SetTargetFPS(60);
+    SDL.Init({.VIDEO});
+	sdl_window := SDL.CreateWindow("Moving forward", 0, 0, cast(i32)config.screen_width, cast(i32)config.screen_height, {.OPENGL});
+    gl_context := SDL.GL_CreateContext(sdl_window);
 
     asset_database_add_image(&asset_db, "Ball");
     asset_database_add_image(&asset_db, "Field");
@@ -49,7 +56,19 @@ main :: proc() {
     game_init(&game, &asset_db, &config);
 
     prev := time.tick_now();
-    for !rl.WindowShouldClose() {
+    main_loop: for {
+        event: SDL.Event;
+		for SDL.PollEvent(&event) {
+			#partial switch event.type {
+			case .KEYDOWN:
+				#partial switch event.key.keysym.sym {
+				case .ESCAPE:
+					break main_loop;
+				}
+			case .QUIT:
+				break main_loop;
+			}
+		}
 
         now := time.tick_now();
         dt := time.duration_seconds(time.tick_diff(prev, now));
@@ -60,5 +79,7 @@ main :: proc() {
         prev = now;
     }
 
-    rl.CloseWindow();
+    SDL.GL_DeleteContext(gl_context);
+    SDL.DestroyWindow(sdl_window);
+    SDL.Quit();
 }
