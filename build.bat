@@ -2,7 +2,7 @@
 
 cls
 
-if not exist bin (
+if not exist bin\ (
     mkdir bin
 )
 

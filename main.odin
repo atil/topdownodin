@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:strings"
 import "core:time"
 import glm "core:math/linalg/glsl"
+import gl "vendor:OpenGL"
 import SDL "vendor:sdl2"
 import SDL_IMG "vendor:sdl2/image"
 
@@ -45,6 +46,10 @@ main :: proc() {
     SDL.Init({.VIDEO});
 	sdl_window := SDL.CreateWindow("Moving forward", 400, 200, cast(i32)config.screen_width, cast(i32)config.screen_height, {.OPENGL});
     gl_context := SDL.GL_CreateContext(sdl_window);
+    SDL.GL_SetAttribute(.CONTEXT_PROFILE_MASK,  i32(SDL.GLprofile.CORE));
+	SDL.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, 4);
+	SDL.GL_SetAttribute(.CONTEXT_MINOR_VERSION, 6);
+    gl.load_up_to(4, 6, SDL.gl_set_proc_address);
 
     asset_database_add_image(&asset_db, "Ball");
     asset_database_add_image(&asset_db, "Field");
@@ -71,6 +76,8 @@ main :: proc() {
 
         game_update(&game, cast(f32)dt);
         game_draw(&game);
+        
+        SDL.GL_SwapWindow(sdl_window);
 
         prev = now;
     }

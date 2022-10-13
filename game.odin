@@ -2,7 +2,9 @@ package main
 
 import "core:fmt"
 import "core:math/linalg"
+import glm "core:math/linalg/glsl"
 import SDL "vendor:sdl2"
+import gl "vendor:OpenGL"
 
 GameObject :: struct {
     position: Vec2,
@@ -29,6 +31,10 @@ Game :: struct {
     player: ^GameObject,
     cursor: ^GameObject,
 
+    // TODO @TEMP
+    vao, vbo: u32, // TODO @CLEANUP: Handle aliases for these u32's
+    debug_shader: u32,
+    debug_shader_uniforms: gl.Uniforms,
 }
 
 game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, input: ^Input) {
@@ -62,7 +68,7 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
         }
     }
 
-    WORLD_SIZE :: 1000.0
+    WORLD_SIZE :: 1000.0 // TODO @CLEANUP: Move to config
     game.world_corners = {
         Vec2 {-WORLD_SIZE, -WORLD_SIZE},
         Vec2 {WORLD_SIZE, -WORLD_SIZE},
@@ -70,6 +76,52 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
         Vec2 {-WORLD_SIZE, WORLD_SIZE},
     };
 
+    debug_shader, debug_shader_ok := gl.load_shaders_file("assets/shaders/debug.vert", "assets/shaders/debug.frag");
+    if (!debug_shader_ok) {
+        fmt.eprintln("Shader error"); // TODO @INCOMPLETE: Handle fatal errors by crashing the thing
+    }
+    game.debug_shader = debug_shader;
+
+    DebugVertex :: struct {
+        pos: Vec2,
+    }
+
+    v1 : DebugVertex = DebugVertex {Vec2 { 0, 0 }};
+    v2 : DebugVertex = DebugVertex {Vec2 { 1, 1 }};
+    vertices := []DebugVertex {v1, v2};
+
+    gl.GenVertexArrays(1, &game.vao);
+    gl.BindVertexArray(game.vao);
+    gl.GenBuffers(1, &game.vbo);
+
+    gl.BindBuffer(gl.ARRAY_BUFFER, game.vbo);
+    gl.EnableVertexAttribArray(0);
+    gl.VertexAttribPointer(0, 2, gl.FLOAT, false, size_of(DebugVertex), offset_of(DebugVertex, pos));
+    gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(DebugVertex), raw_data(vertices), gl.STATIC_DRAW);
+
+    game.debug_shader_uniforms = gl.get_uniforms_from_program(game.debug_shader);
+
+    model := glm.mat4{
+          1, 0, 0, 0.1,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          0, 0, 0, 1,
+    };
+
+    aspect := cast(f32)(game.config.screen_width / game.config.screen_height);
+    cam_size :: 1; // TODO @CLEANUP: Figure out what sort of metric is this, and move it to config
+
+    cam_focus := glm.vec3 {0, 0, 0};
+    view := glm.mat4LookAt(cam_focus, cam_focus + glm.vec3 {0, 0, -1}, glm.vec3 {0, 1, 0});
+    fmt.println(view);
+    proj := glm.mat4Ortho3d(-aspect * cam_size, aspect * cam_size, -cam_size, cam_size, -1, 1);
+
+    u_transform := proj * view * model;
+    gl.UseProgram(game.debug_shader);
+    gl.UniformMatrix4fv(game.debug_shader_uniforms["u_transform"].location, 1, false, &u_transform[0, 0]);
+
+    test_color := ColorBlue;
+    gl.Uniform4fv(game.debug_shader_uniforms["u_color"].location, 1, &test_color.r);
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -99,14 +151,14 @@ game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2)
 game_update :: proc(game: ^Game, dt: f32) {
 
     move_dir := Vec2 {0, 0};
-    if input_is_key_down(game.input, KeyCode.W) {
+    if (input_is_key_down(game.input, KeyCode.W)) {
         move_dir += Vec2 {0, -1};
-    } else if input_is_key_down(game.input, KeyCode.S) {
+    } else if (input_is_key_down(game.input, KeyCode.S)) {
         move_dir += Vec2 {0, 1};
     }
-    if input_is_key_down(game.input, KeyCode.A) {
+    if (input_is_key_down(game.input, KeyCode.A)) {
         move_dir += Vec2 {-1, 0};
-    } else if input_is_key_down(game.input, KeyCode.D) {
+    } else if (input_is_key_down(game.input, KeyCode.D)) {
         move_dir += Vec2 {1, 0};
     }
 
@@ -124,9 +176,18 @@ game_update :: proc(game: ^Game, dt: f32) {
 }
  
 game_draw :: proc(game: ^Game) {
+    gl.Viewport(0, 0, cast(i32)game.config.screen_width, cast(i32)game.config.screen_height);
+    gl.ClearColor(0.5, 0.7, 1.0, 1.0);
+    gl.Clear(gl.COLOR_BUFFER_BIT);
 
+    gl.BindVertexArray(game.vao);
+
+    gl.DrawArrays(gl.LINES, 0, 2);
 }
 
 game_deinit :: proc(game: ^Game) {
-
+    gl.DeleteProgram(game.debug_shader);
+    gl.DeleteVertexArrays(1, &game.vao);
+    gl.DeleteBuffers(1, &game.vbo);
+    delete(game.debug_shader_uniforms);
 }
