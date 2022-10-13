@@ -8,6 +8,7 @@ import SDL "vendor:sdl2"
 import SDL_IMG "vendor:sdl2/image"
 
 Vec2 :: glm.vec2;
+Vec2i :: glm.ivec2;
 
 AssetDatabase :: struct {
     textures : map[string]^SDL.Surface,
@@ -18,7 +19,6 @@ GameConfig :: struct {
     screen_height : u32,
     player_speed : f32,
 }
-
 asset_database_add_image :: proc(db: ^AssetDatabase, name: string) {
     path := strings.concatenate([]string {"assets/", name, ".png"}[:] );
     surf := SDL_IMG.Load(strings.unsafe_string_to_cstring(path));
@@ -41,10 +41,9 @@ main :: proc() {
 
     asset_db: AssetDatabase;
     asset_db.textures = make(map[string]^SDL.Surface);
-    defer asset_database_deinit(asset_db);
 
     SDL.Init({.VIDEO});
-	sdl_window := SDL.CreateWindow("Moving forward", 0, 0, cast(i32)config.screen_width, cast(i32)config.screen_height, {.OPENGL});
+	sdl_window := SDL.CreateWindow("Moving forward", 400, 200, cast(i32)config.screen_width, cast(i32)config.screen_height, {.OPENGL});
     gl_context := SDL.GL_CreateContext(sdl_window);
 
     asset_database_add_image(&asset_db, "Ball");
@@ -52,22 +51,19 @@ main :: proc() {
     asset_database_add_image(&asset_db, "PadBlue");
     asset_database_add_image(&asset_db, "PadGreen");
 
+    input: Input;
+
     game: Game;
-    game_init(&game, &asset_db, &config);
+    game_init(&game, &asset_db, &config, &input);
 
     prev := time.tick_now();
     main_loop: for {
         event: SDL.Event;
 		for SDL.PollEvent(&event) {
-			#partial switch event.type {
-			case .KEYDOWN:
-				#partial switch event.key.keysym.sym {
-				case .ESCAPE:
-					break main_loop;
-				}
-			case .QUIT:
-				break main_loop;
-			}
+            if (event.type == .QUIT) {
+                break main_loop;
+            }
+            input_update_sdl(&input, event);
 		}
 
         now := time.tick_now();
@@ -78,6 +74,9 @@ main :: proc() {
 
         prev = now;
     }
+
+    game_deinit(&game);
+    asset_database_deinit(&asset_db);
 
     SDL.GL_DeleteContext(gl_context);
     SDL.DestroyWindow(sdl_window);
