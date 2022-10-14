@@ -19,6 +19,8 @@ GameConfig :: struct {
     screen_width : u32,
     screen_height : u32,
     player_speed : f32,
+    cam_size : f32,
+
 }
 asset_database_add_image :: proc(db: ^AssetDatabase, name: string) {
     path := strings.concatenate([]string {"assets/", name, ".png"}[:] );
@@ -38,6 +40,7 @@ main :: proc() {
         screen_width = 640,
         screen_height = 480,
         player_speed = 300.0,
+        cam_size = 5.0,
     };
 
     asset_db: AssetDatabase;
@@ -61,6 +64,11 @@ main :: proc() {
     game: Game;
     game_init(&game, &asset_db, &config, &input);
 
+    render_context: RenderContext = ---;
+    aspect := cast(f32)config.screen_width / cast(f32)config.screen_height;
+    render_context.view = glm.mat4LookAt(glm.vec3 {0, 0, 0}, glm.vec3 {0, 0, -1}, glm.vec3 {0, 1, 0});
+    render_context.proj = glm.mat4Ortho3d(-aspect * config.cam_size, aspect * config.cam_size, -config.cam_size, config.cam_size, -1, 1);
+
     prev := time.tick_now();
     main_loop: for {
         event: SDL.Event;
@@ -75,7 +83,11 @@ main :: proc() {
         dt := time.duration_seconds(time.tick_diff(prev, now));
 
         game_update(&game, cast(f32)dt);
-        game_draw(&game);
+
+        cam_target := glm.vec3 {game.cam_target.x, game.cam_target.y, 0};
+        render_context.view = glm.mat4LookAt(cam_target, cam_target + glm.vec3 {0, 0, -1}, glm.vec3 {0, 1, 0});
+
+        game_render(&game, &render_context);
         
         SDL.GL_SwapWindow(sdl_window);
 

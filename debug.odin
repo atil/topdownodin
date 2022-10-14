@@ -56,7 +56,7 @@ debug_draw_flush :: proc() {
     for command in debug_draw_commands {
         switch command.draw_type {
             case .Line: 
-                draw_line(command.points[0], command.points[1], command.color);
+                draw_line_immediate(command.points[0], command.points[1], command.color);
             case .Circle: {
                 point_count := len(command.points);
                 for i in 0..<point_count {

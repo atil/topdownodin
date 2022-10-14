@@ -38,7 +38,7 @@ input_update_sdl :: proc(input: ^Input, event: SDL.Event) {
         }
     case .MOUSEMOTION:
         x, y: i32;
-        SDL.GetGlobalMouseState(&x, &y);
+        SDL.GetMouseState(&x, &y);
         input.mouse_pos = {x, y};
     }
 
