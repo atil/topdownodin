@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:math/linalg"
+import glm "core:math/linalg/glsl"
 
 GameObject :: struct {
     position: Vec2,
@@ -39,9 +40,6 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
     game_add_quad(game, "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
     append(&game.obstacles, game.gos[len(game.gos) - 1]);
 
-    // game_add_quad(game, "PadGreen", Vec2 {-100, -200}, Vec2 {50, 50});
-    // append(&game.obstacles, game.gos[len(game.gos) - 1]);
-
     game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {10, 10});
     game.cursor = &game.gos[len(game.gos) - 1];
 
@@ -69,9 +67,6 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
         Vec2 {WORLD_SIZE, WORLD_SIZE},
         Vec2 {-WORLD_SIZE, WORLD_SIZE},
     };
-
-
-
 }
 
 game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
@@ -116,15 +111,25 @@ game_update :: proc(game: ^Game, dt: f32) {
         move_dir = linalg.vector_normalize(move_dir);
     }
     game.player.position += move_dir * (game.config.player_speed * dt);
-    mouse_screen_pos := game.input.mouse_pos;
 
-    fmt.println(mouse_screen_pos); // start from here: convert this to world pos
+    mouse_screen_pos := Vec2 { cast(f32)game.input.mouse_pos.x, cast(f32)game.input.mouse_pos.y }; // Convert to float vector
+    mouse_world_pos := game_screen_to_world(game, mouse_screen_pos);
 
-    // mouse_world_pos := rl.GetScreenToWorld2D(rl.GetMousePosition(), game.camera);
-    // game.camera.target = linalg.mix(mouse_world_pos, game.player.position, 0.8);
-    // game.cursor.position = mouse_world_pos;
+    game.cam_target = glm.lerp(game.player.position, mouse_world_pos, 0.1);
 
     game_compute_visibility_shape(game);
+}
+
+@(private="file")
+game_screen_to_world :: proc(game: ^Game, screen_pos: Vec2) -> Vec2 {
+    single_pixel_world_size := Vec2 { 2.0 / cast(f32)game.config.screen_width, 2.0 / cast(f32)game.config.screen_height } * game.config.cam_size;
+
+    midpoint_screen_pos := Vec2 { cast(f32)game.config.screen_width / 2.0, cast(f32)game.config.screen_height / 2.0 };
+    mid_to_mouse_screen := screen_pos - midpoint_screen_pos;
+    world_pos := Vec2 { mid_to_mouse_screen.x * single_pixel_world_size.x, mid_to_mouse_screen.y * single_pixel_world_size.y };
+
+    return world_pos;
+
 }
  
 game_deinit :: proc(game: ^Game) {
