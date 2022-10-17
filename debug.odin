@@ -52,11 +52,11 @@ debug_draw_text :: proc(content: string, world_position: Vec2, color: Color) {
     });
 }
 
-debug_draw_flush :: proc() {
+debug_draw_flush :: proc(render_context: ^RenderContext) {
     for command in debug_draw_commands {
         switch command.draw_type {
             case .Line: 
-                draw_line_immediate(command.points[0], command.points[1], command.color);
+                draw_line_immediate(command.points[0], command.points[1], command.color, render_context);
             case .Circle: {
                 point_count := len(command.points);
                 for i in 0..<point_count {

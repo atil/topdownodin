@@ -43,7 +43,7 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
     game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {10, 10});
     game.cursor = &game.gos[len(game.gos) - 1];
 
-    game_add_quad(game, "Ball", Vec2 {100, 100}, Vec2 {32, 32});
+    game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {1, 1});
     game.player = &game.gos[len(game.gos) - 1];
 
     for obs in game.obstacles {
@@ -97,9 +97,9 @@ game_update :: proc(game: ^Game, dt: f32) {
 
     move_dir := Vec2 {0, 0};
     if (input_is_key_down(game.input, KeyCode.W)) {
-        move_dir += Vec2 {0, -1};
-    } else if (input_is_key_down(game.input, KeyCode.S)) {
         move_dir += Vec2 {0, 1};
+    } else if (input_is_key_down(game.input, KeyCode.S)) {
+        move_dir += Vec2 {0, -1};
     }
     if (input_is_key_down(game.input, KeyCode.A)) {
         move_dir += Vec2 {-1, 0};
@@ -122,10 +122,11 @@ game_update :: proc(game: ^Game, dt: f32) {
 
 @(private="file")
 game_screen_to_world :: proc(game: ^Game, screen_pos: Vec2) -> Vec2 {
+    corrected_screen_pos := Vec2 { cast(f32)screen_pos.x, cast(f32)game.config.screen_height - screen_pos.y } ;
     single_pixel_world_size := Vec2 { 2.0 / cast(f32)game.config.screen_width, 2.0 / cast(f32)game.config.screen_height } * game.config.cam_size;
 
     midpoint_screen_pos := Vec2 { cast(f32)game.config.screen_width / 2.0, cast(f32)game.config.screen_height / 2.0 };
-    mid_to_mouse_screen := screen_pos - midpoint_screen_pos;
+    mid_to_mouse_screen := corrected_screen_pos - midpoint_screen_pos;
     world_pos := Vec2 { mid_to_mouse_screen.x * single_pixel_world_size.x, mid_to_mouse_screen.y * single_pixel_world_size.y };
 
     return world_pos;

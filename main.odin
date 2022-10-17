@@ -39,7 +39,7 @@ main :: proc() {
     config := GameConfig { 
         screen_width = 640,
         screen_height = 480,
-        player_speed = 300.0,
+        player_speed = 50.0,
         cam_size = 5.0,
     };
 
@@ -85,9 +85,12 @@ main :: proc() {
         game_update(&game, cast(f32)dt);
 
         cam_target := glm.vec3 {game.cam_target.x, game.cam_target.y, 0};
+        // fmt.println(game.player.position, cam_target); // start from here: figure out why the cam is centered around origin and not moving with the player
         render_context.view = glm.mat4LookAt(cam_target, cam_target + glm.vec3 {0, 0, -1}, glm.vec3 {0, 1, 0});
 
         game_render(&game, &render_context);
+
+        debug_draw_flush(&render_context);
         
         SDL.GL_SwapWindow(sdl_window);
 
