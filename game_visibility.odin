@@ -33,7 +33,7 @@ game_visibility_query :: proc(obstacle_edges: ^[dynamic]LineSeg, ray: Ray) -> Ve
 
 game_compute_visibility_shape :: proc(game: ^Game) {
     clear(&game.visible_corners);
-    player_pos := game.player.position;
+    player_pos := game.player.go_data.position;
 
     for corner in game.obstacle_corners {
 

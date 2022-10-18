@@ -17,59 +17,59 @@ RenderContext :: struct {
     proj: glm.mat4,
 }
 
+BufferHandle :: u32; // These should be private, but "debug" uses them
+ShaderHandle :: u32;
+
 RenderUnit :: struct {
-
+    vao, vbo, ebo: BufferHandle,
+    shader: ShaderHandle,
+    shader_uniforms: gl.Uniforms,
 }
 
-DebugRenderUnit :: struct {
-    vao, vbo: u32, // TODO @CLEANUP: Handle aliases for these u32's
-    debug_shader: u32,
-    debug_shader_uniforms: gl.Uniforms,
+@(private="file")
+RenderVertex :: struct {
+    pos, texcoord: Vec2,
 }
 
-DebugRenderVertex :: struct {
-    pos: Vec2,
-}
+render_init_ru :: proc(points: []Vec2, texcoords: []Vec2, tex_name: string) -> RenderUnit {
+    assert(len(points) == len(texcoords));
 
-draw_line_immediate :: proc(a, b: Vec2, color: Color, render_context: ^RenderContext) {
-    ru: DebugRenderUnit = ---;
-
-    debug_shader, debug_shader_ok := gl.load_shaders_file("assets/shaders/debug.vert", "assets/shaders/debug.frag");
-    if (!debug_shader_ok) {
+    ru: RenderUnit = ---;
+    shader, shader_ok := gl.load_shaders_file("assets/shaders/world.vert", "assets/shaders/world.frag");
+    if (!shader_ok) {
         fmt.eprintln("Shader error"); // TODO @INCOMPLETE: Handle fatal errors by crashing the thing
     }
-    ru.debug_shader = debug_shader;
 
-    vertices := []DebugRenderVertex {DebugRenderVertex {a}, DebugRenderVertex {b}};
+    vert_count := len(points);
+    render_verts := make([]RenderVertex, vert_count);
+    defer delete(render_verts);
 
+    for i in 0..<vert_count {
+        render_verts[i].pos = points[i];
+        render_verts[i].texcoord = texcoords[i];
+    }
+    
     gl.GenVertexArrays(1, &ru.vao);
     gl.BindVertexArray(ru.vao);
     gl.GenBuffers(1, &ru.vbo);
 
     gl.BindBuffer(gl.ARRAY_BUFFER, ru.vbo);
     gl.EnableVertexAttribArray(0);
-    gl.VertexAttribPointer(0, 2, gl.FLOAT, false, size_of(DebugRenderVertex), offset_of(DebugRenderVertex, pos));
-    gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(DebugRenderVertex), raw_data(vertices), gl.STATIC_DRAW);
-
-    ru.debug_shader_uniforms = gl.get_uniforms_from_program(ru.debug_shader);
-
-    u_transform := render_context.proj * render_context.view * glm.identity(glm.mat4);
+    gl.EnableVertexAttribArray(1);
+    gl.VertexAttribPointer(0, 2, gl.FLOAT, false, size_of(RenderVertex), offset_of(RenderVertex, pos));
+    gl.VertexAttribPointer(1, 2, gl.FLOAT, false, size_of(RenderVertex), offset_of(RenderVertex, texcoord));
     
-    gl.UseProgram(ru.debug_shader);
-    gl.UniformMatrix4fv(ru.debug_shader_uniforms["u_transform"].location, 1, false, &u_transform[0, 0]);
+    gl.BufferData(gl.ARRAY_BUFFER, vert_count * size_of(RenderVertex), raw_data(render_verts), gl.STATIC_DRAW);
 
-    col := color; // Can't take the address of the parameter
-    gl.Uniform4fv(ru.debug_shader_uniforms["u_color"].location, 1, &col.r);
+    return ru;
+}
 
-    // Draw
-    gl.BindVertexArray(ru.vao);
-    gl.DrawArrays(gl.LINES, 0, 2);
-
-    // Deinit
-    gl.DeleteProgram(ru.debug_shader);
+render_deinit_ru :: proc(ru: ^RenderUnit) {
+    gl.DeleteProgram(ru.shader);
     gl.DeleteVertexArrays(1, &ru.vao);
     gl.DeleteBuffers(1, &ru.vbo);
-    delete(ru.debug_shader_uniforms);
+    gl.DeleteBuffers(1, &ru.ebo);
+    delete(ru.shader_uniforms);
 }
 
 game_render :: proc(game: ^Game, render_context: ^RenderContext) {
@@ -77,9 +77,11 @@ game_render :: proc(game: ^Game, render_context: ^RenderContext) {
     gl.ClearColor(0.5, 0.7, 1.0, 1.0);
     gl.Clear(gl.COLOR_BUFFER_BIT);
 
-    for _, i in game.player.points {
-        p1 := game.player.position + game.player.points[i];
-        p2 := game.player.position + game.player.points[(i + 1) % len(game.player.points)];
+    player_data := &game.player.go_data;
+
+    for _, i in player_data.points {
+        p1 := player_data.position + player_data.points[i];
+        p2 := player_data.position + player_data.points[(i + 1) % len(player_data.points)];
 
         debug_draw_line(p1, p2, ColorBlue);
     }
