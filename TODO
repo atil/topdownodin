@@ -2,7 +2,7 @@ Core
 + assets database struct, add other textures
 + import math queries and write unit tests
 + line-line intersection unit tests
-+ gameobjects with arbitrary shapes
+- gameobjects with arbitrary shapes (either convex or tri-fan-concave)
 - think about the package structure
 - figure out how to panic (e.g. in case shader compile error)
 

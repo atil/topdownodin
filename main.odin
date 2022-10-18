@@ -46,13 +46,17 @@ main :: proc() {
     asset_db: AssetDatabase;
     asset_db.textures = make(map[string]^SDL.Surface);
 
+    GL_MAJ_VERSION :: 3;
+    GL_MIN_VERSION :: 3;
+
     SDL.Init({.VIDEO});
 	sdl_window := SDL.CreateWindow("Moving forward", 400, 200, cast(i32)config.screen_width, cast(i32)config.screen_height, {.OPENGL});
-    gl_context := SDL.GL_CreateContext(sdl_window);
     SDL.GL_SetAttribute(.CONTEXT_PROFILE_MASK,  i32(SDL.GLprofile.CORE));
-	SDL.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, 4);
-	SDL.GL_SetAttribute(.CONTEXT_MINOR_VERSION, 6);
-    gl.load_up_to(4, 6, SDL.gl_set_proc_address);
+	SDL.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, GL_MAJ_VERSION);
+	SDL.GL_SetAttribute(.CONTEXT_MINOR_VERSION, GL_MIN_VERSION);
+
+    gl_context := SDL.GL_CreateContext(sdl_window);
+    gl.load_up_to(GL_MAJ_VERSION, GL_MIN_VERSION, SDL.gl_set_proc_address);
 
     asset_database_add_image(&asset_db, "Ball");
     asset_database_add_image(&asset_db, "Field");

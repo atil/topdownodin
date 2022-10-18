@@ -42,10 +42,10 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
     game.db = asset_db;
     game.input = input;
 
-    game_add_quad(game, "obstacle1", "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
-    append(&game.obstacles, &(game.gameobjects[len(game.gameobjects) - 1]));
+    // game_add_quad(game, "obstacle1", "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
+    // append(&game.obstacles, &(game.gameobjects[len(game.gameobjects) - 1]));
 
-    game_add_quad(game, "cursor", "Ball", Vec2 {0, 0}, Vec2 {10, 10});
+    game_add_quad(game, "cursor", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
     game.cursor = &game.gameobjects[len(game.gameobjects) - 1];
 
     game_add_quad(game, "player", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
@@ -53,7 +53,7 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
 
     for obs in game.obstacles {
         obs_data := &obs.go_data;
-        corner_count := len(obs_data.points) - 1; // Last one is used to close the polygon
+        corner_count := len(obs_data.points);
         obs_corners := make([]Vec2, corner_count);
         defer delete(obs_corners);
 
@@ -61,7 +61,8 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
             corner := obs_data.points[i] + obs_data.position;
             append(&game.obstacle_corners, corner);
 
-            line_seg := LineSeg { obs_data.position + obs_data.points[i], obs_data.position + obs_data.points[(i + 1) % corner_count] };
+            line_seg := LineSeg { obs_data.position + obs_data.points[i], 
+                obs_data.position + obs_data.points[(i + 1) % corner_count] };
             append(&game.obstacle_edges, line_seg);
         }
     }
