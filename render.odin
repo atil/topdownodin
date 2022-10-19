@@ -12,6 +12,8 @@ Color :: struct {
 ColorRed :: Color { 255, 0, 0, 255 }
 ColorGreen :: Color { 0, 255, 0, 255 }
 ColorBlue :: Color { 0, 0, 255, 255 }
+ColorGray :: Color { 100, 100, 100, 255 }
+ColorYellow :: Color { 255, 255, 0, 255 }
 
 RenderContext :: struct {
     view: glm.mat4,

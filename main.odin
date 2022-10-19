@@ -39,7 +39,7 @@ main :: proc() {
     config := GameConfig { 
         screen_width = 640,
         screen_height = 480,
-        player_speed = 50.0,
+        player_speed = 10.0,
         cam_size = 5.0,
     };
 
@@ -73,6 +73,8 @@ main :: proc() {
     render_context: RenderContext = ---;
     render_init(&render_context, &config);
 
+    debug_grid_init(ColorGray);
+
     prev := time.tick_now();
     main_loop: for {
         event: SDL.Event;
@@ -93,6 +95,8 @@ main :: proc() {
 
         game_render(&game, &render_context);
 
+        debug_draw_circle(Vec2 {0, 0}, 0.1, ColorYellow);
+        debug_grid_draw(&render_context);
         debug_draw_flush(&render_context);
         
         SDL.GL_SwapWindow(sdl_window);
@@ -100,6 +104,7 @@ main :: proc() {
         prev = now;
     }
 
+    debug_grid_deinit();
     game_deinit(&game);
     asset_database_deinit(&asset_db);
 

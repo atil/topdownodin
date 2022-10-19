@@ -25,10 +25,10 @@ Render
 + raylib custom shader for quads
 X raylib deliver visibility shape to the shader
 X raylib postprocess shader for off-screen rendering
-- start from here: switch to SDL and achieve feature parity
+- switch to SDL and achieve feature parity
 
 Util/editor
-- draw grid
++ draw grid
 - json: gameobject positions & corners
 + debug draw: to be drawn on top of everything else.
 + debug draw: circle

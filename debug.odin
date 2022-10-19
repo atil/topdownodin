@@ -6,6 +6,10 @@ import "core:strings"
 import gl "vendor:OpenGL"
 import glm "core:math/linalg/glsl"
 
+/////////////////////////////////////////////////////////////////////////////
+// Commands
+/////////////////////////////////////////////////////////////////////////////
+
 @(private="file")
 DebugDrawType :: enum {
     Line,
@@ -39,7 +43,7 @@ debug_draw_line :: proc(start: Vec2, end: Vec2, color: Color) {
 }
 
 debug_draw_circle :: proc(center: Vec2, radius: f32, color: Color) {
-    POINT_COUNT :: 20;
+    POINT_COUNT :: 10;
 
     angle_step_rad: f32 = (360 / POINT_COUNT) * math.RAD_PER_DEG;
     points := make([dynamic]Vec2, POINT_COUNT);
@@ -85,11 +89,16 @@ debug_draw_flush :: proc(render_context: ^RenderContext) {
     clear(&debug_draw_text_commands);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// Drawing
+/////////////////////////////////////////////////////////////////////////////
+
 @(private="file")
 DebugRenderUnit :: struct {
     vao, vbo: BufferHandle,
     debug_shader: ShaderHandle,
     debug_shader_uniforms: gl.Uniforms,
+    point_count: u32,
 }
 
 @(private="file")
@@ -106,6 +115,7 @@ draw_line_immediate :: proc(a, b: Vec2, color: Color, render_context: ^RenderCon
     ru.debug_shader = debug_shader;
 
     vertices := []DebugRenderVertex {DebugRenderVertex {a}, DebugRenderVertex {b}};
+    ru.point_count = cast(u32)len(vertices);
 
     gl.GenVertexArrays(1, &ru.vao);
     gl.BindVertexArray(ru.vao);
@@ -123,16 +133,82 @@ draw_line_immediate :: proc(a, b: Vec2, color: Color, render_context: ^RenderCon
     gl.UseProgram(ru.debug_shader);
     gl.UniformMatrix4fv(ru.debug_shader_uniforms["u_transform"].location, 1, false, &u_transform[0, 0]);
 
-    col := color; // Can't take the address of the parameter
+    col := Color { color.r / 256, color.g / 256, color.b / 256, color.a / 256 };
     gl.Uniform4fv(ru.debug_shader_uniforms["u_color"].location, 1, &col.r);
 
     // Draw
     gl.BindVertexArray(ru.vao);
-    gl.DrawArrays(gl.LINES, 0, 2);
+    gl.DrawArrays(gl.LINES, 0, cast(i32)ru.point_count);
 
     // Deinit
     gl.DeleteProgram(ru.debug_shader);
     gl.DeleteVertexArrays(1, &ru.vao);
     gl.DeleteBuffers(1, &ru.vbo);
     delete(ru.debug_shader_uniforms);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Grid
+/////////////////////////////////////////////////////////////////////////////
+
+@(private="file")
+debug_grid_ru: DebugRenderUnit = ---;
+
+debug_grid_init :: proc(color: Color) {
+
+    debug_shader, debug_shader_ok := gl.load_shaders_file("assets/shaders/debug.vert", "assets/shaders/debug.frag");
+    assert(debug_shader_ok, "Debug shader error");
+
+    debug_grid_ru.debug_shader = debug_shader;
+
+    GRID_EXTENTS :: 100.0;
+
+    vertices := make([dynamic]DebugRenderVertex, 4 * cast(u32)GRID_EXTENTS);
+    defer delete(vertices);
+
+    for x: f32 = -GRID_EXTENTS; x <= GRID_EXTENTS; x += 1.0 {
+        append(&vertices, DebugRenderVertex { Vec2 {x, GRID_EXTENTS} });
+        append(&vertices, DebugRenderVertex { Vec2 {x, -GRID_EXTENTS} });
+    }
+    
+    for y: f32 = -GRID_EXTENTS; y <= GRID_EXTENTS; y += 1.0 {
+        append(&vertices, DebugRenderVertex { Vec2 {GRID_EXTENTS, y} });
+        append(&vertices, DebugRenderVertex { Vec2 {-GRID_EXTENTS, y} });
+    }
+
+    gl.GenVertexArrays(1, &debug_grid_ru.vao);
+    gl.BindVertexArray(debug_grid_ru.vao);
+    gl.GenBuffers(1, &debug_grid_ru.vbo);
+
+    gl.BindBuffer(gl.ARRAY_BUFFER, debug_grid_ru.vbo);
+    gl.EnableVertexAttribArray(0);
+    gl.VertexAttribPointer(0, 2, gl.FLOAT, false, size_of(DebugRenderVertex), offset_of(DebugRenderVertex, pos));
+    gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(DebugRenderVertex), raw_data(vertices), gl.STATIC_DRAW);
+
+    debug_grid_ru.debug_shader_uniforms = gl.get_uniforms_from_program(debug_grid_ru.debug_shader);
+    debug_grid_ru.point_count = cast(u32)len(vertices);
+
+    gl.UseProgram(debug_grid_ru.debug_shader);
+
+    col := Color { color.r / 256, color.g / 256, color.b / 256, color.a / 256 };
+    gl.Uniform4fv(debug_grid_ru.debug_shader_uniforms["u_color"].location, 1, &col.r);
+
+}
+
+debug_grid_draw :: proc(render_context: ^RenderContext) {
+    gl.BindVertexArray(debug_grid_ru.vao);
+
+    gl.UseProgram(debug_grid_ru.debug_shader);
+    u_transform := render_context.proj * render_context.view * glm.identity(glm.mat4);
+    gl.UniformMatrix4fv(debug_grid_ru.debug_shader_uniforms["u_transform"].location, 1, false, &u_transform[0, 0]);
+
+    gl.DrawArrays(gl.LINES, 0, cast(i32)debug_grid_ru.point_count);
+}
+
+debug_grid_deinit :: proc() {
+
+    gl.DeleteProgram(debug_grid_ru.debug_shader);
+    gl.DeleteVertexArrays(1, &debug_grid_ru.vao);
+    gl.DeleteBuffers(1, &debug_grid_ru.vbo);
+    delete(debug_grid_ru.debug_shader_uniforms);
 }
