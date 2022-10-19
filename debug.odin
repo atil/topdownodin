@@ -102,9 +102,7 @@ draw_line_immediate :: proc(a, b: Vec2, color: Color, render_context: ^RenderCon
     ru: DebugRenderUnit = ---;
 
     debug_shader, debug_shader_ok := gl.load_shaders_file("assets/shaders/debug.vert", "assets/shaders/debug.frag");
-    if (!debug_shader_ok) {
-        fmt.eprintln("Shader error"); // TODO @INCOMPLETE: Handle fatal errors by crashing the thing
-    }
+    assert(debug_shader_ok, "Debug shader error");
     ru.debug_shader = debug_shader;
 
     vertices := []DebugRenderVertex {DebugRenderVertex {a}, DebugRenderVertex {b}};

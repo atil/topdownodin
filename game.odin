@@ -45,14 +45,14 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
     // game_add_quad(game, "obstacle1", "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
     // append(&game.obstacles, &(game.gameobjects[len(game.gameobjects) - 1]));
 
-    game_add_quad(game, "cursor", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
-    game.cursor = &game.gameobjects[len(game.gameobjects) - 1];
+    // game_add_quad(game, "cursor", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
+    // game.cursor = &game.gameobjects[len(game.gameobjects) - 1];
 
     game_add_quad(game, "player", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
     game.player = &game.gameobjects[len(game.gameobjects) - 1];
 
-    for obs in game.obstacles {
-        obs_data := &obs.go_data;
+    for _,i in game.obstacles {
+        obs_data : ^GoData = &(game.obstacles[i].go_data);
         corner_count := len(obs_data.points);
         obs_corners := make([]Vec2, corner_count);
         defer delete(obs_corners);
@@ -103,7 +103,7 @@ game_init_go :: proc(position: Vec2, size: Vec2) -> GoData {
 game_add_quad :: proc(game: ^Game, go_name: string, tex_name: string, position: Vec2, size: Vec2) {
     go: GameObject = ---;
     go.go_data = game_init_go(position, size);    
-    go.render_unit = render_init_ru(go.go_data.points[:], go.go_data.texcoords[:], tex_name);
+    go.render_unit = render_init_ru(go.go_data.points[:], go.go_data.texcoords[:], tex_name, game.db);
 
     append(&game.gameobjects, go);
 }

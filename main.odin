@@ -23,7 +23,7 @@ GameConfig :: struct {
 
 }
 asset_database_add_image :: proc(db: ^AssetDatabase, name: string) {
-    path := strings.concatenate([]string {"assets/", name, ".png"}[:] );
+    path := strings.concatenate([]string {"assets/", name, ".png"}[:]);
     surf := SDL_IMG.Load(strings.unsafe_string_to_cstring(path));
     db.textures[name] = surf;
 }
@@ -57,6 +57,8 @@ main :: proc() {
 
     gl_context := SDL.GL_CreateContext(sdl_window);
     gl.load_up_to(GL_MAJ_VERSION, GL_MIN_VERSION, SDL.gl_set_proc_address);
+
+    SDL_IMG.Init(SDL_IMG.INIT_PNG);
 
     asset_database_add_image(&asset_db, "Ball");
     asset_database_add_image(&asset_db, "Field");
@@ -103,6 +105,7 @@ main :: proc() {
     game_deinit(&game);
     asset_database_deinit(&asset_db);
 
+    SDL_IMG.Quit();
     SDL.GL_DeleteContext(gl_context);
     SDL.DestroyWindow(sdl_window);
     SDL.Quit();

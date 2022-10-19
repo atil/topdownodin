@@ -7,10 +7,11 @@ if not exist bin\ (
 )
 
 if "%1" == "-b" (
-    odin build . -out:bin/TopDownOdin.exe -debug
+    odin build . -out:bin/TopDownOdin.exe -debug -o:minimal
 ) else if "%1" == "-t" (
     odin test .
 ) else (
-    odin run . -out:bin/TopDownOdin.exe -debug
+    odin run . -out:bin/TopDownOdin.exe -debug -o:minimal
+
 )
 
