@@ -71,9 +71,7 @@ main :: proc() {
     game_init(&game, &asset_db, &config, &input);
 
     render_context: RenderContext = ---;
-    aspect := cast(f32)config.screen_width / cast(f32)config.screen_height;
-    render_context.view = glm.mat4LookAt(glm.vec3 {0, 0, 0}, glm.vec3 {0, 0, -1}, glm.vec3 {0, 1, 0});
-    render_context.proj = glm.mat4Ortho3d(-aspect * config.cam_size, aspect * config.cam_size, -config.cam_size, config.cam_size, -1, 1);
+    render_init(&render_context, &config);
 
     prev := time.tick_now();
     main_loop: for {

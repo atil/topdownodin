@@ -35,9 +35,16 @@ RenderVertex :: struct {
     pos, texcoord: Vec2,
 }
 
-render_init_ru :: proc(points: []Vec2, texcoords: []Vec2, tex_name: string, db: ^AssetDatabase) -> RenderUnit {
+render_init :: proc(render_context: ^RenderContext, config: ^GameConfig) {
     gl.Enable(gl.BLEND);
     gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    aspect := cast(f32)config.screen_width / cast(f32)config.screen_height;
+    render_context.view = glm.mat4LookAt(glm.vec3 {0, 0, 0}, glm.vec3 {0, 0, -1}, glm.vec3 {0, 1, 0});
+    render_context.proj = glm.mat4Ortho3d(-aspect * config.cam_size, aspect * config.cam_size, -config.cam_size, config.cam_size, -1, 1);
+}
+
+render_init_ru :: proc(points: []Vec2, texcoords: []Vec2, tex_name: string, db: ^AssetDatabase) -> RenderUnit {
 
     assert(len(points) == len(texcoords));
 
@@ -117,7 +124,9 @@ game_render :: proc(game: ^Game, render_context: ^RenderContext) {
         gl.ActiveTexture(gl.TEXTURE0);
         gl.BindTexture(gl.TEXTURE_2D, go.render_unit.texture);
 
-        u_transform := render_context.proj * render_context.view * glm.identity(glm.mat4);
+        model := glm.mat4Translate(glm.vec3 {go.go_data.position.x , go.go_data.position.y, 0});
+
+        u_transform := render_context.proj * render_context.view * model;
         loc := go.render_unit.shader_uniforms["u_transform"].location;
         gl.UniformMatrix4fv(loc, 1, false, &u_transform[0, 0]);
         gl.DrawElements(gl.TRIANGLES, cast(i32)go.render_unit.index_count, gl.UNSIGNED_SHORT, nil);

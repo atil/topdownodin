@@ -36,7 +36,7 @@ Util/editor
 - debug draw: line batching
 
 Environment
-- [on hold] odinfmt: prints to console?
+- odinfmt 
 - odin.vim amme hizmeti: add built-in functions like append (https://github.com/odin-lang/Odin/wiki/Built-in-Procedures)
 X (not worth it at the moment) try vim-bujo for todos
 + reduce raylib log level
