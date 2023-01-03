@@ -7,12 +7,14 @@ import glm "core:math/linalg/glsl"
 import gl "vendor:OpenGL"
 import SDL "vendor:sdl2"
 import SDL_IMG "vendor:sdl2/image"
+import SDL_TTF "vendor:sdl2/ttf"
 
 Vec2 :: glm.vec2;
 Vec2i :: glm.ivec2;
 
 AssetDatabase :: struct {
-    textures : map[string]^SDL.Surface,
+    textures: map[string]^SDL.Surface,
+    font: ^SDL_TTF.Font, 
 }
 
 GameConfig :: struct {
@@ -33,6 +35,8 @@ asset_database_deinit :: proc(db: ^AssetDatabase) {
         SDL.FreeSurface(surf);
     }
     delete(db.textures);
+
+    SDL_TTF.CloseFont(db.font);
 }
 
 main :: proc() {
@@ -59,6 +63,10 @@ main :: proc() {
     gl.load_up_to(GL_MAJ_VERSION, GL_MIN_VERSION, SDL.gl_set_proc_address);
 
     SDL_IMG.Init(SDL_IMG.INIT_PNG);
+    SDL_TTF.Init();
+
+    asset_db.font = SDL_TTF.OpenFont("assets/Consolas.ttf", 20);
+    assert(asset_db.font != nil, "Error loading the font file");
 
     asset_database_add_image(&asset_db, "Ball");
     asset_database_add_image(&asset_db, "Field");
@@ -95,8 +103,8 @@ main :: proc() {
 
         game_render(&game, &render_context);
 
-        debug_draw_circle(Vec2 {0, 0}, 0.1, ColorYellow);
-        debug_grid_draw(&render_context);
+        // debug_draw_circle(Vec2 {0, 0}, 0.1, ColorYellow);
+        // debug_grid_draw(&render_context);
         debug_draw_flush(&render_context);
         
         SDL.GL_SwapWindow(sdl_window);
@@ -108,6 +116,7 @@ main :: proc() {
     game_deinit(&game);
     asset_database_deinit(&asset_db);
 
+    SDL_TTF.Quit();
     SDL_IMG.Quit();
     SDL.GL_DeleteContext(gl_context);
     SDL.DestroyWindow(sdl_window);

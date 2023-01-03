@@ -35,6 +35,8 @@ Game :: struct {
     cursor: ^GameObject,
 
     cam_target: Vec2,
+
+    test_text_ru: RenderUnit,
 }
 
 game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, input: ^Input) {
@@ -42,13 +44,13 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
     game.db = asset_db;
     game.input = input;
 
-    // game_add_quad(game, "obstacle1", "PadBlue", Vec2 {100, 200}, Vec2 {100, 100});
-    // append(&game.obstacles, &(game.gameobjects[len(game.gameobjects) - 1]));
+    game_add_quad(game, "PadBlue", Vec2 {-5, 0}, Vec2 {1, 3});
+    append(&game.obstacles, &(game.gameobjects[len(game.gameobjects) - 1]));
 
-    // game_add_quad(game, "cursor", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
+    // game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {1, 1});
     // game.cursor = &game.gameobjects[len(game.gameobjects) - 1];
 
-    game_add_quad(game, "player", "Ball", Vec2 {0, 0}, Vec2 {1, 1});
+    game_add_quad(game, "Ball", Vec2 {0, 0}, Vec2 {1, 1});
     game.player = &game.gameobjects[len(game.gameobjects) - 1];
 
     for _,i in game.obstacles {
@@ -74,6 +76,9 @@ game_init :: proc(game: ^Game, asset_db: ^AssetDatabase, config: ^GameConfig, in
         Vec2 {WORLD_SIZE, WORLD_SIZE},
         Vec2 {-WORLD_SIZE, WORLD_SIZE},
     };
+
+    // TODO @TEMP
+    game.test_text_ru = render_init_text_ru(Vec2 {0, 0}, 1, "O", ColorBlue, game.db.font);
 }
 
 @(private="file")
@@ -100,7 +105,7 @@ game_init_go :: proc(position: Vec2, size: Vec2) -> GoData {
 }
 
 @(private="file")
-game_add_quad :: proc(game: ^Game, go_name: string, tex_name: string, position: Vec2, size: Vec2) {
+game_add_quad :: proc(game: ^Game, tex_name: string, position: Vec2, size: Vec2) {
     go: GameObject = ---;
     go.go_data = game_init_go(position, size);    
     go.render_unit = render_init_ru(go.go_data.points[:], go.go_data.texcoords[:], tex_name, game.db);

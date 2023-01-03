@@ -4,7 +4,7 @@ Core
 + line-line intersection unit tests
 - gameobjects with arbitrary shapes (either convex or tri-fan-concave)
 - think about the package structure
-- figure out how to panic (e.g. in case shader compile error)
++ figure out how to panic (e.g. in case shader compile error)
 
 Gameplay
 + make the thing look at the cursor
@@ -25,7 +25,7 @@ Render
 + raylib custom shader for quads
 X raylib deliver visibility shape to the shader
 X raylib postprocess shader for off-screen rendering
-- switch to SDL and achieve feature parity
+- switch to SDL and achieve feature parity (start from here: text)
 
 Util/editor
 + draw grid
@@ -36,7 +36,7 @@ Util/editor
 - debug draw: line batching
 
 Environment
-- odinfmt 
+- odinfmt (at the moment it's horribly broken. try again after a few days)
 - odin.vim amme hizmeti: add built-in functions like append (https://github.com/odin-lang/Odin/wiki/Built-in-Procedures)
 X (not worth it at the moment) try vim-bujo for todos
 + reduce raylib log level
